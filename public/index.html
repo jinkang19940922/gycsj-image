@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>光影穿梭机 HOME</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23667eea'/><stop offset='100%25' stop-color='%23764ba2'/></linearGradient></defs><circle cx='50' cy='50' r='45' fill='url(%23g)' opacity='0.2'/><circle cx='50' cy='50' r='35' stroke='url(%23g)' stroke-width='3' fill='none'/><polygon points='50,25 65,55 35,55' fill='url(%23g)'/><circle cx='50' cy='65' r='8' fill='url(%23g)'/></svg>">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --bg-color: #f5f7fa;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --text-secondary: #666666;
+      --border-color: #e0e0e0;
+      --shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #1a1a2e;
+      --card-bg: #16213e;
+      --text-color: #e0e0e0;
+      --text-secondary: #a0a0a0;
+      --border-color: #2a2a4a;
+      --shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-color);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* 导航栏 */
+    .navbar {
+      background: var(--card-bg);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .navbar-brand h1 {
+      font-size: 1.3rem;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-btn:hover {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+    }
+
+    .nav-btn.active {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .nav-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .user-info {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .theme-toggle, .logout-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover, .logout-btn:hover {
+      background: var(--primary-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .logout-btn {
+      background: #ff6b6b;
+      border-color: #ff6b6b;
+      color: white;
+    }
+
+    .logout-btn:hover { background: #ee5a5a; }
+
+    /* 主容器 */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    /* 页面 */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* 登录界面 */
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .login-logo svg {
+      width: 80px;
+      height: 80px;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    .login-card h2 {
+      text-align: center;
+      color: var(--text-color);
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-color);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 16px;
+      background: var(--card-bg);
+      color: var(--text-color);
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .login-btn {
+      width: 100%;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 图片库页面 */
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .gallery-header h2 {
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gallery-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .refresh-btn, .batch-action-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover, .batch-action-btn:hover {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .batch-action-btn.active {
+      background: var(--primary-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .batch-action-btn.delete-selected-btn {
+      background: #ff6b6b;
+      border-color: #ff6b6b;
+      color: white;
+    }
+
+    .batch-action-btn.delete-selected-btn:hover {
+      background: #ee5a5a;
+    }
+
+    .selected-count {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .selected-count b {
+      color: #667eea;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .image-card {
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .image-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .image-card.selected {
+      outline: 3px solid #667eea;
+      outline-offset: -3px;
+    }
+
+    .image-card.select-mode { cursor: default; }
+    .image-card.select-mode:hover { transform: none; }
+
+    .checkbox-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: none;
+    }
+
+    .image-card.select-mode .checkbox-overlay { display: block; }
+
+    .checkbox-custom {
+      width: 24px;
+      height: 24px;
+      border: 2px solid white;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .checkbox-custom.checked {
+      background: #667eea;
+      border-color: #667eea;
+    }
+
+    .checkbox-custom.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .image-preview {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s;
+    }
+
+    .image-card:hover .image-preview img {
+      transform: scale(1.1);
+    }
+
+    .preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(102, 126, 234, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+      color: white;
+    }
+
+    .image-card:hover .preview-overlay { opacity: 1; }
+
+    .preview-icon { font-size: 32px; margin-bottom: 8px; }
+    .preview-text { font-size: 14px; }
+
+    .image-info {
+      padding: 12px;
+    }
+
+    .image-info onclick { event.stopPropagation(); }
+
+    .image-filename {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .image-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      flex: 1;
+      min-width: 70px;
+      padding: 6px 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: background 0.2s;
+    }
+
+    .copy-btn { background: #667eea; color: white; }
+    .copy-btn:hover { background: #5a6fd6; }
+
+    .delete-btn { background: #ff6b6b; color: white; }
+    .delete-btn:hover { background: #ee5a5a; }
+
+    .copy-format-btn { background: #4caf50; color: white; }
+    .copy-format-btn:hover { background: #43a047; }
+
+    .format-dropdown { position: relative; display: inline-block; }
+
+    .format-menu {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 0;
+      min-width: 120px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+
+    .format-menu.show { display: block; }
+
+    .format-menu button {
+      display: block;
+      width: 100%;
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      color: var(--text-color);
+      cursor: pointer;
+      text-align: left;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+
+    .format-menu button:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+      grid-column: 1/-1;
+    }
+
+    .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
+
+    /* 上传页面 */
+    .upload-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: var(--shadow);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .upload-card h2 {
+      color: var(--text-color);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .upload-mode-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .upload-mode-btn {
+      flex: 1;
+      padding: 10px 20px;
+      border: 2px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .upload-mode-btn:hover {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .upload-mode-btn.active {
+      border-color: #667eea;
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .drop-zone {
+      border: 3px dashed #667eea;
+      border-radius: 12px;
+      padding: 60px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #764ba2;
+      background: rgba(102, 126, 234, 0.1);
+      transform: scale(1.01);
+    }
+
+    .drop-zone-icon { font-size: 48px; margin-bottom: 15px; }
+
+    .drop-zone-text {
+      color: var(--text-secondary);
+      font-size: 16px;
+    }
+
+    .drop-zone-text strong { color: #667eea; }
+
+    #fileInput, #folderInput { display: none; }
+
+    .progress-container {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: 10px;
+      color: var(--text-secondary);
+    }
+
+    .upload-tips {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 8px;
+    }
+
+    .upload-tips h3 {
+      color: var(--text-color);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .upload-tips ul {
+      color: var(--text-secondary);
+      font-size: 13px;
+      padding-left: 20px;
+    }
+
+    .upload-tips li { margin-bottom: 5px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #333;
+      color: white;
+      padding: 12px 30px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { background: #4caf50; }
+    .toast.error { background: #f44336; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 8px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 40px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* 设置弹窗 */
+    .settings-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: var(--shadow);
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 25px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-header h3 {
+      color: var(--text-color);
+      font-size: 1.2rem;
+      margin: 0;
+    }
+
+    .settings-header .modal-close {
+      position: static;
+      font-size: 28px;
+      color: var(--text-secondary);
+    }
+
+    .settings-body {
+      padding: 25px;
+    }
+
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 25px;
+    }
+
+    .btn-cancel, .btn-submit {
+      padding: 10px 25px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-cancel {
+      background: var(--border-color);
+      color: var(--text-color);
+    }
+
+    .btn-cancel:hover {
+      background: #d0d0d0;
+    }
+
+    .btn-submit {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .navbar { padding: 0 10px; }
+      .navbar-brand h1 { font-size: 1rem; }
+      .nav-btn span { display: none; }
+      .container { padding: 20px 10px; }
+      .upload-card { padding: 20px; }
+      .settings-card { margin: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar" id="navbar" style="display: none;">
+    <div class="navbar-brand" onclick="switchPage('gallery')">
+      <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="45" fill="url(#logoGradient)" opacity="0.2"/>
+        <circle cx="50" cy="50" r="35" stroke="url(#logoGradient)" stroke-width="3" fill="none"/>
+        <polygon points="50,25 65,55 35,55" fill="url(#logoGradient)"/>
+        <circle cx="50" cy="65" r="8" fill="url(#logoGradient)"/>
+        <circle cx="30" cy="40" r="4" fill="url(#logoGradient)" opacity="0.6"/>
+        <circle cx="70" cy="35" r="3" fill="url(#logoGradient)" opacity="0.6"/>
+        <circle cx="75" cy="60" r="2" fill="url(#logoGradient)" opacity="0.6"/>
+      </svg>
+      <h1>光影穿梭机 HOME</h1>
+    </div>
+    <div class="navbar-nav">
+      <button class="nav-btn active" id="navGallery" onclick="switchPage('gallery')">
+        🖼️ <span>图片库</span>
+      </button>
+      <button class="nav-btn" id="navUpload" onclick="switchPage('upload')">
+        📤 <span>上传图片</span>
+      </button>
+    </div>
+    <div class="nav-right">
+      <span class="user-info" id="userInfo"></span>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      <button class="nav-btn" onclick="openSettings()" id="settingsBtn">⚙️ 设置</button>
+      <button class="logout-btn" onclick="logout()">退出</button>
+    </div>
+  </nav>
+
+  <!-- 设置弹窗 -->
+  <div class="modal" id="settingsModal">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h3>⚙️ 账户设置</h3>
+        <span class="modal-close" onclick="closeSettings()">&times;</span>
+      </div>
+      <div class="settings-body">
+        <form id="settingsForm">
+          <div class="form-group">
+            <label for="currentPassword">当前密码</label>
+            <input type="password" id="currentPassword" placeholder="请输入当前密码" required>
+          </div>
+          <div class="form-group">
+            <label for="newUsername">新用户名</label>
+            <input type="text" id="newUsername" placeholder="请输入新用户名" required>
+          </div>
+          <div class="form-group">
+            <label for="newPassword">新密码</label>
+            <input type="password" id="newPassword" placeholder="请输入新密码" required>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">确认新密码</label>
+            <input type="password" id="confirmPassword" placeholder="请再次输入新密码" required>
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn-cancel" onclick="closeSettings()">取消</button>
+            <button type="submit" class="btn-submit">保存修改</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录页面 -->
+  <div class="login-wrapper" id="loginPage">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="loginLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="45" fill="url(#loginLogoGradient)" opacity="0.2"/>
+          <circle cx="50" cy="50" r="35" stroke="url(#loginLogoGradient)" stroke-width="3" fill="none"/>
+          <polygon points="50,25 65,55 35,55" fill="url(#loginLogoGradient)"/>
+          <circle cx="50" cy="65" r="8" fill="url(#loginLogoGradient)"/>
+          <circle cx="30" cy="40" r="4" fill="url(#loginLogoGradient)" opacity="0.6"/>
+          <circle cx="70" cy="35" r="3" fill="url(#loginLogoGradient)" opacity="0.6"/>
+          <circle cx="75" cy="60" r="2" fill="url(#loginLogoGradient)" opacity="0.6"/>
+        </svg>
+      </div>
+      <h2>光影穿梭机 HOME</h2>
+      <p class="login-subtitle">🔐 用户登录</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" id="password" placeholder="请输入密码" required>
+        </div>
+        <button type="submit" class="login-btn" id="loginBtn">登录</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 图片库页面 -->
+  <div class="container page" id="galleryPage" style="display: none;">
+    <div class="gallery-header">
+      <h2>🖼️ 我的图片</h2>
+      <div class="gallery-actions">
+        <button class="refresh-btn" onclick="loadImages()">🔄 刷新</button>
+        <button class="batch-action-btn" onclick="toggleSelectMode()" id="batchSelectBtn">✓ 批量管理</button>
+        <button class="batch-action-btn" onclick="selectAllImages()" id="selectAllBtn" style="display:none;">☑️ 全选</button>
+        <button class="batch-action-btn delete-selected-btn" onclick="deleteSelectedImages()" id="deleteSelectedBtn" style="display:none;">🗑️ 删除选中</button>
+        <span class="selected-count" id="selectedCount" style="display:none;">已选择 <b>0</b> 张</span>
+      </div>
+    </div>
+    <div class="image-grid" id="imageGrid"></div>
+  </div>
+
+  <!-- 上传页面 -->
+  <div class="container page" id="uploadPage" style="display: none;">
+    <div class="upload-card">
+      <h2>📤 上传图片</h2>
+      <div class="upload-mode-actions">
+        <button class="upload-mode-btn active" id="selectModeBtn" onclick="setUploadMode('select')">📁 选择文件</button>
+        <button class="upload-mode-btn" id="folderModeBtn" onclick="setUploadMode('folder')">📂 选择文件夹</button>
+      </div>
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-zone-icon">📁</div>
+        <div class="drop-zone-text">
+          <strong>点击选择</strong> 或将图片拖拽到此处上传
+          <br>
+          <small>支持格式：JPG, PNG, GIF, WebP, SVG | 最大 10MB</small>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+      <input type="file" id="folderInput" accept="image/*" multiple webkitdirectory directory>
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">上传中...</div>
+      </div>
+      <div class="upload-tips">
+        <h3>💡 上传提示</h3>
+        <ul>
+          <li>支持单次最多上传 100 张图片</li>
+          <li>选择文件夹模式可一键上传整个文件夹</li>
+          <li>超过 100 张图片将自动分批上传</li>
+          <li>上传完成后在图片库查看和管理</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal" id="imageModal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modalImage" src="" alt="预览">
+  </div>
+
+  <script>
+    // 全局变量
+    let selectMode = false;
+    let selectedImages = new Set();
+    let uploadMode = 'select';
+    let currentPage = 'gallery';
+
+    // DOM 元素
+    const loginPage = document.getElementById('loginPage');
+    const navbar = document.getElementById('navbar');
+    const galleryPage = document.getElementById('galleryPage');
+    const uploadPage = document.getElementById('uploadPage');
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const userInfo = document.getElementById('userInfo');
+    const imageGrid = document.getElementById('imageGrid');
+    const toast = document.getElementById('toast');
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const batchSelectBtn = document.getElementById('batchSelectBtn');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const selectedCount = document.getElementById('selectedCount');
+
+    // 初始化
+    checkAuth();
+    loadTheme();
+
+    // 切换页面
+    function switchPage(page) {
+      currentPage = page;
+      document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      });
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      if (page === 'gallery') {
+        galleryPage.classList.add('active');
+        galleryPage.style.display = 'block';
+        document.getElementById('navGallery').classList.add('active');
+        loadImages();
+      } else if (page === 'upload') {
+        uploadPage.classList.add('active');
+        uploadPage.style.display = 'block';
+        document.getElementById('navUpload').classList.add('active');
+      }
+    }
+
+    // 登录
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '登录中...';
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showToast('登录成功', 'success');
+          checkAuth();
+        } else {
+          showToast(data.error || '登录失败', 'error');
+        }
+      } catch (error) {
+        showToast('网络错误', 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '登录';
+      }
+    });
+
+    // 检查登录状态
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/status');
+        const data = await response.json();
+
+        if (data.loggedIn) {
+          loginPage.style.display = 'none';
+          navbar.style.display = 'flex';
+          userInfo.textContent = `👤 ${data.username}`;
+          galleryPage.style.display = 'block';
+          uploadPage.style.display = 'block';
+          switchPage('gallery');
+        } else {
+          loginPage.style.display = 'flex';
+          navbar.style.display = 'none';
+          galleryPage.style.display = 'none';
+          uploadPage.style.display = 'none';
+        }
+      } catch (error) {
+        loginPage.style.display = 'flex';
+        navbar.style.display = 'none';
+        galleryPage.style.display = 'none';
+        uploadPage.style.display = 'none';
+      }
+    }
+
+    // 登出
+    async function logout() {
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+        showToast('已退出登录', 'success');
+        checkAuth();
+      } catch (error) {
+        showToast('登出失败', 'error');
+      }
+    }
+
+    // 打开设置
+    function openSettings() {
+      document.getElementById('settingsModal').classList.add('show');
+      document.getElementById('settingsForm').reset();
+    }
+
+    // 关闭设置
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.remove('show');
+    }
+
+    // 更新账户信息
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newUsername = document.getElementById('newUsername').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (newPassword !== confirmPassword) {
+        showToast('❌ 两次输入的新密码不一致', 'error');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showToast('❌ 密码长度至少 6 位', 'error');
+        return;
+      }
+
+      const submitBtn = e.target.querySelector('.btn-submit');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '保存中...';
+
+      try {
+        const response = await fetch('/api/account/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentPassword, newUsername, newPassword })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showToast('✅ ' + data.message, 'success');
+          userInfo.textContent = `👤 ${data.username}`;
+          closeSettings();
+        } else {
+          showToast('❌ ' + (data.error || '修改失败'), 'error');
+        }
+      } catch (error) {
+        showToast('❌ 网络错误', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '保存修改';
+      }
+    });
+
+    // 切换主题
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const btn = document.getElementById('themeBtn');
+      
+      if (currentTheme === 'dark') {
+        html.setAttribute('data-theme', 'light');
+        btn.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        btn.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // 加载主题
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      const btn = document.getElementById('themeBtn');
+      if (savedTheme === 'dark') {
+        btn.textContent = '☀️';
+      }
+    }
+
+    // 设置上传模式
+    function setUploadMode(mode) {
+      uploadMode = mode;
+      document.getElementById('selectModeBtn').classList.toggle('active', mode === 'select');
+      document.getElementById('folderModeBtn').classList.toggle('active', mode === 'folder');
+      
+      if (mode === 'select') {
+        dropZone.querySelector('.drop-zone-icon').textContent = '📁';
+        dropZone.querySelector('.drop-zone-text strong').textContent = '点击选择';
+      } else {
+        dropZone.querySelector('.drop-zone-icon').textContent = '📂';
+        dropZone.querySelector('.drop-zone-text strong').textContent = '选择文件夹';
+      }
+    }
+
+    // 点击上传区域
+    dropZone.addEventListener('click', () => {
+      if (uploadMode === 'select') {
+        fileInput.click();
+      } else {
+        folderInput.click();
+      }
+    });
+
+    // 文件选择
+    fileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length > 0) uploadFiles(files);
+      fileInput.value = '';
+    });
+
+    // 文件夹选择
+    folderInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+      if (files.length > 0) {
+        if (files.length > 100) {
+          showToast('⚠️ 最多支持 100 张图片，已选择前 100 张', 'error');
+        }
+        uploadFiles(files.slice(0, 100));
+      }
+      folderInput.value = '';
+    });
+
+    // 拖拽事件
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length > 0) uploadFiles(files);
+    });
+
+    // 上传文件
+    async function uploadFiles(files) {
+      if (files.length === 0) return;
+
+      const batchSize = 100;
+      if (files.length > batchSize) {
+        showToast(`📦 共 ${files.length} 张图片，将分批上传`, 'success');
+        const batches = Math.ceil(files.length / batchSize);
+        for (let i = 0; i < batches; i++) {
+          const batch = files.slice(i * batchSize, (i + 1) * batchSize);
+          showToast(`📦 上传第 ${i + 1}/${batches} 批 (${batch.length} 张)`, 'success');
+          await uploadBatch(batch);
+        }
+        showToast(`✅ 全部上传完成！`, 'success');
+        switchPage('gallery');
+        return;
+      }
+
+      await uploadBatch(files);
+    }
+
+    // 上传单个批次
+    async function uploadBatch(files) {
+      if (files.length === 0) return;
+
+      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+      const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = `准备上传 ${files.length} 张图片 (${totalSizeMB}MB)...`;
+
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('images', file);
+      }
+
+      try {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            progressFill.style.width = percent + '%';
+            progressText.textContent = `上传中 ${Math.round(percent)}% (${files.length} 张)`;
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          progressContainer.style.display = 'none';
+
+          if (xhr.status === 200) {
+            const result = JSON.parse(xhr.responseText);
+            showToast(`✅ 成功上传 ${result.images.length} 张图片`, 'success');
+            switchPage('gallery');
+          } else if (xhr.status === 401) {
+            showToast('请先登录', 'error');
+            checkAuth();
+          } else {
+            const error = JSON.parse(xhr.responseText);
+            showToast(error.error || '上传失败', 'error');
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          progressContainer.style.display = 'none';
+          showToast('网络错误，上传失败', 'error');
+        });
+
+        xhr.open('POST', '/api/upload/multiple');
+        xhr.send(formData);
+      } catch (error) {
+        progressContainer.style.display = 'none';
+        showToast('上传失败：' + error.message, 'error');
+      }
+    }
+
+    // 加载图片
+    async function loadImages() {
+      try {
+        const response = await fetch('/api/images');
+        if (response.status === 401) { checkAuth(); return; }
+
+        const data = await response.json();
+
+        if (data.success && data.images && data.images.length > 0) {
+          const html = data.images.map(img => {
+            const urlAttr = img.url.replace(/"/g, '&quot;');
+            const filenameAttr = img.filename.replace(/"/g, '&quot;');
+            return `
+            <div class="image-card${selectMode ? ' select-mode' : ''}" data-url="${urlAttr}" data-filename="${filenameAttr}" onclick="${selectMode ? 'toggleImageSelection(this)' : 'showModalPreview(this)'}">
+              <div class="checkbox-overlay" onclick="event.stopPropagation(); toggleImageSelection(this.parentElement)">
+                <div class="checkbox-custom ${selectedImages.has(filenameAttr) ? 'checked' : ''}"></div>
+              </div>
+              <div class="image-preview">
+                <img src="${img.thumbnail}" alt="${img.filename}">
+                <div class="preview-overlay">
+                  <span class="preview-icon">🔍</span>
+                  <span class="preview-text">点击查看大图</span>
+                </div>
+              </div>
+              <div class="image-info" onclick="event.stopPropagation()">
+                <div class="image-filename">${img.filename}</div>
+                <div class="image-actions">
+                  <div class="format-dropdown">
+                    <button class="action-btn copy-format-btn" onclick="toggleFormatMenu(this)">📋 复制</button>
+                    <div class="format-menu">
+                      <button onclick="copyUrl(this)">图片链接</button>
+                      <button onclick="copyMarkdown(this)">Markdown</button>
+                      <button onclick="copyBBCode(this)">BBCode</button>
+                      <button onclick="copyHTML(this)">HTML</button>
+                    </div>
+                  </div>
+                  <button class="action-btn delete-btn" onclick="deleteImage('${img.filename.replace(/'/g, "\\'")}')">删除</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('');
+          imageGrid.innerHTML = html;
+        } else {
+          imageGrid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <div>暂无图片，去上传第一张图片吧！</div>
+            </div>`;
+        }
+      } catch (error) {
+        showToast('加载图片失败', 'error');
+      }
+    }
+
+    // 切换格式菜单
+    function toggleFormatMenu(btn) {
+      const menu = btn.nextElementSibling;
+      document.querySelectorAll('.format-menu').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+      });
+      menu.classList.toggle('show');
+      event.stopPropagation();
+    }
+
+    // 获取图片数据
+    function getImageData(btn) {
+      const card = btn.closest('.image-card');
+      return {
+        url: card.dataset.url,
+        filename: card.dataset.filename
+      };
+    }
+
+    // 复制函数
+    function copyUrl(btn) {
+      const { url } = getImageData(btn);
+      copyToClipboard(url, '✅ 链接已复制到剪贴板');
+      closeAllMenus();
+    }
+
+    function copyMarkdown(btn) {
+      const { url, filename } = getImageData(btn);
+      copyToClipboard(`![${filename}](${url})`, '✅ Markdown 已复制到剪贴板');
+      closeAllMenus();
+    }
+
+    function copyBBCode(btn) {
+      const { url, filename } = getImageData(btn);
+      copyToClipboard(`[img]${url}[/img]`, '✅ BBCode 已复制到剪贴板');
+      closeAllMenus();
+    }
+
+    function copyHTML(btn) {
+      const { url, filename } = getImageData(btn);
+      copyToClipboard(`<img src="${url}" alt="${filename}">`, '✅ HTML 已复制到剪贴板');
+      closeAllMenus();
+    }
+
+    function closeAllMenus() {
+      document.querySelectorAll('.format-menu').forEach(m => m.classList.remove('show'));
+    }
+
+    function copyToClipboard(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(successMsg, 'success');
+        }).catch(() => fallbackCopy(text, successMsg));
+      } else {
+        fallbackCopy(text, successMsg);
+      }
+    }
+
+    function fallbackCopy(text, successMsg) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        showToast(successful ? successMsg : '❌ 复制失败', successful ? 'success' : 'error');
+      } catch (err) {
+        showToast('❌ 复制失败', 'error');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    // 批量选择
+    function toggleSelectMode() {
+      selectMode = !selectMode;
+      batchSelectBtn.textContent = selectMode ? '✕ 取消管理' : '✓ 批量管理';
+      batchSelectBtn.classList.toggle('active', selectMode);
+      selectAllBtn.style.display = selectMode ? 'inline-block' : 'none';
+      deleteSelectedBtn.style.display = selectMode ? 'inline-block' : 'none';
+      selectedCount.style.display = selectMode ? 'inline' : 'none';
+      
+      if (!selectMode) {
+        selectedImages.clear();
+      }
+      loadImages();
+    }
+
+    function toggleImageSelection(card) {
+      if (!selectMode) return;
+      
+      const filename = card.dataset.filename;
+      const checkbox = card.querySelector('.checkbox-custom');
+      
+      if (selectedImages.has(filename)) {
+        selectedImages.delete(filename);
+        card.classList.remove('selected');
+        checkbox.classList.remove('checked');
+      } else {
+        selectedImages.add(filename);
+        card.classList.add('selected');
+        checkbox.classList.add('checked');
+      }
+      
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const count = selectedImages.size;
+      selectedCount.innerHTML = `已选择 <b>${count}</b> 张`;
+    }
+
+    function selectAllImages() {
+      const cards = imageGrid.querySelectorAll('.image-card');
+      const allSelected = selectedImages.size === cards.length;
+      
+      if (allSelected) {
+        selectedImages.clear();
+        cards.forEach(card => {
+          card.classList.remove('selected');
+          card.querySelector('.checkbox-custom')?.classList.remove('checked');
+        });
+      } else {
+        cards.forEach(card => {
+          const filename = card.dataset.filename;
+          selectedImages.add(filename);
+          card.classList.add('selected');
+          card.querySelector('.checkbox-custom')?.classList.add('checked');
+        });
+      }
+      
+      updateSelectedCount();
+    }
+
+    async function deleteSelectedImages() {
+      const count = selectedImages.size;
+      if (count === 0) {
+        showToast('请先选择要删除的图片', 'error');
+        return;
+      }
+      
+      if (!confirm(`确定要删除选中的 ${count} 张图片吗？此操作不可恢复！`)) return;
+      
+      const filenames = Array.from(selectedImages);
+      let successCount = 0;
+      
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = `正在删除 ${count} 张图片...`;
+      
+      for (let i = 0; i < filenames.length; i++) {
+        const filename = filenames[i];
+        try {
+          const response = await fetch(`/api/images/${filename}`, { method: 'DELETE' });
+          if (response.status === 401) { checkAuth(); return; }
+          const data = await response.json();
+          if (data.success) successCount++;
+        } catch (error) {
+          console.error('删除失败:', filename, error);
+        }
+        
+        const percent = Math.round(((i + 1) / filenames.length) * 100);
+        progressFill.style.width = percent + '%';
+        progressText.textContent = `正在删除 ${i + 1}/${count}...`;
+      }
+      
+      progressContainer.style.display = 'none';
+      selectedImages.clear();
+      showToast(`✅ 成功删除 ${successCount} 张图片`, 'success');
+      loadImages();
+    }
+
+    // 删除单张图片
+    async function deleteImage(filename) {
+      if (!confirm('确定要删除这张图片吗？')) return;
+
+      try {
+        const response = await fetch(`/api/images/${filename}`, { method: 'DELETE' });
+        if (response.status === 401) { checkAuth(); return; }
+        const data = await response.json();
+        if (data.success) {
+          showToast('删除成功', 'success');
+          loadImages();
+        } else {
+          showToast(data.error || '删除失败', 'error');
+        }
+      } catch (error) {
+        showToast('删除失败', 'error');
+      }
+    }
+
+    // 预览图片
+    function showModalPreview(card) {
+      if (!card) return;
+      const url = card.dataset.url;
+      if (!url) return;
+      modalImage.src = url;
+      imageModal.classList.add('show');
+    }
+
+    function closeModal() {
+      imageModal.classList.remove('show');
+    }
+
+    // 点击菜单外部关闭
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.format-menu').forEach(m => m.classList.remove('show'));
+    });
+
+    // Toast
+    function showToast(message, type = '') {
+      toast.textContent = message;
+      toast.className = 'toast ' + type + ' show';
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>

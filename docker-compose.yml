@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  gycsj-image:
+    image: jinkang19940922/gycsj-image:latest
+    container_name: gycsj-image
+    ports:
+      - "23400:23400"
+    volumes:
+      # 持久化存储上传的图片
+      - ./uploads:/app/uploads
+      - ./thumbnails:/app/thumbnails
+      - ./data:/app/data
+    environment:
+      - PORT=23400
+      - ADMIN_USERNAME=jinkang
+      - ADMIN_PASSWORD=70719405
+      - SESSION_SECRET=your-secret-key-change-this-in-production
+    restart: unless-stopped
