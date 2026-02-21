@@ -34,8 +34,8 @@ docker run -d \
   -v $(pwd)/thumbnails:/app/thumbnails \
   -v $(pwd)/data:/app/data \
   -e PORT=23400 \
-  -e ADMIN_USERNAME=jinkang \
-  -e ADMIN_PASSWORD=70719405 \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=admin123 \
   --name gycsj-image \
   jinkang19940922/gycsj-image:latest
 
