@@ -18,6 +18,9 @@
 - 🐳 Docker 一键部署
 - 🎨 **自定义 Logo** - 光影穿梭机主题标识
 
+<img width="536" height="591" alt="1" src="https://github.com/user-attachments/assets/cdd63561-c570-4f81-9069-6cbec807c534" />
+<img width="1879" height="902" alt="2" src="https://github.com/user-attachments/assets/7940d09e-18f5-4b46-a9a8-f6be27baf25d" />
+
 ## 🚀 快速开始
 
 ### 方式一：Docker Hub（推荐）
