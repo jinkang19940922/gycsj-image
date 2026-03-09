@@ -2,18 +2,24 @@ version: '3.8'
 
 services:
   gycsj-image:
+    build: .
     image: jinkang19940922/gycsj-image:latest
     container_name: gycsj-image
     ports:
-      - "23400:23400"
+      - "23400:3000"
     volumes:
       # 持久化存储上传的图片
       - ./uploads:/app/uploads
       - ./thumbnails:/app/thumbnails
       - ./data:/app/data
+    env_file:
+      - .env
     environment:
-      - PORT=23400
-      - ADMIN_USERNAME=jinkang
-      - ADMIN_PASSWORD=70719405
-      - SESSION_SECRET=your-secret-key-change-this-in-production
+      - NODE_ENV=development
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

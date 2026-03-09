@@ -5,21 +5,24 @@
 ## ✨ 功能特性
 
 - 🔐 **用户认证** - 登录保护，防止未授权访问
+- 🖼️ **登录界面美化** - 必应每日壁纸 + 每日一言
 - ⚙️ **账户管理** - 支持修改用户名和密码
-- 🖼️ **图片库** - 简洁的图片展示界面
+- 🖼️ **图片库** - 简洁优雅的图片展示界面
 - 📤 **独立上传页面** - 专门的上传功能页面
 - 📁 **批量上传** - 支持选择整个文件夹一键上传
 - 📁 支持批量上传（最多 100 张）
 - 🖼️ **自动生成缩略图** - 快速预览
 - 🔗 一键复制多种格式（链接/Markdown/BBCode/HTML）
 - 🗑️ **批量删除** - 支持多选删除图片
+- 📁 **图片分组** - 支持按分组管理图片
 - 🌙 **暗色模式** - 护眼主题切换
+- 🔧 **API工具** - 强大的随机图片API生成器
 - 📱 响应式设计，支持移动端
 - 🐳 Docker 一键部署
+- 🎨 **精美的UI设计** - 现代渐变背景 + 动画效果
+- 🖼️ **增强的图片预览** - 支持放大缩小、全屏、拖拽查看
+- 📷 **公共图片库** - 必应每日壁纸展示、下载和转存
 - 🎨 **自定义 Logo** - 光影穿梭机主题标识
-
-<img width="536" height="591" alt="1" src="https://github.com/user-attachments/assets/cdd63561-c570-4f81-9069-6cbec807c534" />
-<img width="1879" height="902" alt="2" src="https://github.com/user-attachments/assets/7940d09e-18f5-4b46-a9a8-f6be27baf25d" />
 
 ## 🚀 快速开始
 
@@ -29,11 +32,11 @@
 # 拉取镜像并启动
 docker pull jinkang19940922/gycsj-image:latest
 docker run -d \
-  -p 23400:23400 \
+  -p 23400:3000 \
   -v $(pwd)/uploads:/app/uploads \
   -v $(pwd)/thumbnails:/app/thumbnails \
   -v $(pwd)/data:/app/data \
-  -e PORT=23400 \
+  -e PORT=3000 \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=admin123 \
   --name gycsj-image \
@@ -49,14 +52,14 @@ docker stop gycsj-image && docker rm gycsj-image
 ### 方式二：Docker Compose
 
 ```bash
-# 启动服务
-docker compose up -d
+# 构建并启动服务
+docker-compose up -d --build
 
 # 查看日志
-docker compose logs -f
+docker-compose logs -f
 
 # 停止服务
-docker compose down
+docker-compose down
 ```
 
 ### 方式三：本地构建 Docker
@@ -67,7 +70,7 @@ docker build -t gycsj-image .
 
 # 运行容器
 docker run -d \
-  -p 3000:3000 \
+  -p 23400:3000 \
   -v $(pwd)/uploads:/app/uploads \
   -v $(pwd)/thumbnails:/app/thumbnails \
   -v $(pwd)/data:/app/data \
@@ -77,7 +80,7 @@ docker run -d \
   gycsj-image
 ```
 
-### 方式三：Node.js 直接运行
+### 方式四：Node.js 直接运行
 
 ```bash
 # 安装依赖
@@ -104,17 +107,34 @@ environment:
 
 ## 📖 使用说明
 
-1. 访问 `http://localhost:3000`
+1. 访问 `http://localhost:23400`
 2. 使用默认账号登录（admin / admin123）
 3. **图片库** - 查看和管理已上传的图片
 4. **上传图片** - 点击导航栏「上传图片」进入上传页面
 5. 选择文件或文件夹，或拖拽图片到上传区域
 6. 上传完成后自动跳转到图片库
-7. 点击图片可预览大图
+7. 点击图片可预览大图（支持放大缩小、全屏、拖拽）
 8. 点击「📋 复制」选择格式（图片链接/Markdown/BBCode/HTML）
 9. 点击「✓ 批量管理」可多选删除图片
-10. 点击右上角「⚙️ 设置」可修改用户名和密码
-11. 点击右上角「🌙」切换主题
+10. 点击「公共图片」查看和下载必应每日壁纸
+11. 点击「API工具」生成随机图片API链接
+12. 点击右上角「⚙️ 设置」可修改用户名和密码
+13. 点击右上角「🌙」切换主题
+
+### 图片预览快捷键
+
+| 功能 | 快捷键 |
+|------|--------|
+| 上一张 | ← 或 左箭头 |
+| 下一张 | → 或 右箭头 |
+| 放大 | + 或 = |
+| 缩小 | - |
+| 重置大小 | 0 |
+| 全屏 | F |
+| 关闭 | ESC |
+| 放大后拖拽 | 按住鼠标左键拖动 |
+| 双击重置 | 双击图片 |
+| 滚轮放大缩小 | 鼠标滚轮上下滑动 |
 
 ## 🔌 API 接口
 
@@ -128,6 +148,11 @@ environment:
 | POST | `/api/upload/multiple` | 批量上传（最多 100 张） |
 | GET | `/api/images` | 获取图片列表 |
 | DELETE | `/api/images/:filename` | 删除指定图片 |
+| GET | `/api/bing-wallpapers` | 获取必应壁纸列表 |
+| GET | `/api/bing-wallpapers/login` | 获取登录页面壁纸 |
+| POST | `/api/bing-wallpapers/save` | 保存壁纸到图库 |
+| GET | `/api/daily-quote` | 获取每日一言 |
+| GET | `/api/random-quote` | 获取随机名言 |
 | GET | `/api/health` | 健康检查 |
 
 ### 上传响应示例
@@ -137,8 +162,8 @@ environment:
   "success": true,
   "images": [
     {
-      "url": "http://localhost:3000/uploads/xxx.jpg",
-      "thumbnail": "http://localhost:3000/thumbnails/thumb_xxx.jpg",
+      "url": "http://localhost:23400/uploads/xxx.jpg",
+      "thumbnail": "http://localhost:23400/thumbnails/thumb_xxx.jpg",
       "filename": "xxx.jpg",
       "size": 102400
     }
@@ -160,7 +185,16 @@ environment:
 ```
 gycsj-image/
 ├── public/
-│   └── index.html       # 前端页面
+│   ├── index.html       # 前端页面
+│   ├── css/
+│   │   └── style.css    # 样式文件
+│   └── js/
+│       └── main.js      # 前端脚本
+├── src/
+│   ├── controllers/     # 控制器
+│   ├── services/        # 服务层
+│   ├── middleware/      # 中间件
+│   └── routes/          # 路由
 ├── uploads/             # 原图存储目录
 ├── thumbnails/          # 缩略图存储目录
 ├── data/
@@ -193,7 +227,7 @@ gycsj-image/
 docker ps
 
 # 查看日志
-docker compose logs
+docker-compose logs
 ```
 
 **Q: 上传失败？**
@@ -206,7 +240,7 @@ docker exec gycsj-image ls -la /app/
 ```bash
 # 删除 data 目录重启
 rm -rf ./data
-docker compose restart
+docker-compose restart
 ```
 
 **Q: 如何备份图片数据？**
@@ -222,5 +256,27 @@ MIT
 ---
 
 **项目名称**: gycsj-image  
-**版本**: 1.0.0  
+**版本**: 2.0.0  
 **作者**: 光影穿梭机团队
+
+## 🎨 版本更新日志
+
+### v2.0.0
+- ✨ 新增登录界面必应每日壁纸
+- ✨ 新增每日一言功能
+- ✨ 新增公共图片库（必应壁纸展示）
+- ✨ 新增图片分组管理
+- ✨ 增强图片预览功能（放大缩小、全屏、拖拽）
+- ✨ 新增API工具页面
+- 🎨 整体UI美化升级
+- 🎨 添加动态背景和装饰元素
+- 🎨 优化卡片和按钮样式
+- 🐛 修复登录功能问题
+- 🐛 修复全屏预览问题
+
+### v1.0.0
+- 🚀 初始版本发布
+- 🔐 用户认证功能
+- 🖼️ 图片库和上传功能
+- 🌙 暗色模式
+- 📱 响应式设计
