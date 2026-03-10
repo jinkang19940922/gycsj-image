@@ -3,7 +3,7 @@ let selectMode = false;
 let selectedImages = new Set();
 let uploadMode = 'select';
 let currentPage = 'gallery';
-let currentGroupFilter = '';
+let currentGroupFilter = 'all';
 let allGroups = [];
 let siteSettings = {};
 let totalImagesCount = 0; // 存储真实的图片总数
@@ -38,6 +38,9 @@ const folderInput = document.getElementById('folderInput');
 const progressContainer = document.getElementById('progressContainer');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
+const galleryProgressContainer = document.getElementById('galleryProgressContainer');
+const galleryProgressFill = document.getElementById('galleryProgressFill');
+const galleryProgressText = document.getElementById('galleryProgressText');
 const batchSelectBtn = document.getElementById('batchSelectBtn');
 const batchActions = document.getElementById('batchActions');
 
@@ -46,6 +49,9 @@ checkAuth();
 loadTheme();
 loadSiteSettings();
 loadLoginBackground();
+
+// 检查上传状态
+checkUploadState();
 
 // 切换页面
 function switchPage(page) {
@@ -336,10 +342,7 @@ fileInput.addEventListener('change', (e) => {
 folderInput.addEventListener('change', (e) => {
   const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
   if (files.length > 0) {
-    if (files.length > 100) {
-      showToast('最多支持 100 张图片，已选择前 100 张', 'error');
-    }
-    uploadFiles(files.slice(0, 100));
+    uploadFiles(files);
   }
   folderInput.value = '';
 });
@@ -365,25 +368,69 @@ dropZone.addEventListener('drop', (e) => {
 async function uploadFiles(files) {
   if (files.length === 0) return;
 
-  const batchSize = 100;
-  if (files.length > batchSize) {
-    showToast(`共 ${files.length} 张图片，将分批上传`, 'success');
-    const batches = Math.ceil(files.length / batchSize);
-    for (let i = 0; i < batches; i++) {
-      const batch = files.slice(i * batchSize, (i + 1) * batchSize);
-      showToast(`上传第 ${i + 1}/${batches} 批 (${batch.length} 张)`, 'success');
-      await uploadBatch(batch);
-    }
-    showToast('全部上传完成！', 'success');
-    switchPage('gallery');
-    return;
+  const batchSize = 100; // 每批100张，更高效
+  const totalFiles = files.length;
+  const totalBatches = Math.ceil(totalFiles / batchSize);
+  
+  // 在开始上传时就确定分组ID，确保所有批次使用同一个分组
+  let groupId = document.getElementById('uploadGroup')?.value || 'home';
+  if (!groupId) groupId = 'home';
+  
+  if (totalBatches > 1) {
+    showToast(`共 ${totalFiles} 张图片，将分 ${totalBatches} 批上传到 ${groupId === 'home' ? '默认' : '选中'} 分组`, 'success');
   }
 
-  await uploadBatch(files);
+  let uploadedCount = 0;
+  let failedBatches = 0;
+  
+  // 存储上传状态到本地存储，防止刷新页面后丢失
+  const uploadState = {
+    totalFiles,
+    totalBatches,
+    groupId,
+    currentBatch: 0,
+    uploadedCount: 0,
+    failedBatches: 0
+  };
+  localStorage.setItem('uploadState', JSON.stringify(uploadState));
+  
+  for (let i = 0; i < totalBatches; i++) {
+    const start = i * batchSize;
+    const end = Math.min(start + batchSize, totalFiles);
+    const batch = files.slice(start, end);
+    
+    // 更新上传状态
+    uploadState.currentBatch = i + 1;
+    localStorage.setItem('uploadState', JSON.stringify(uploadState));
+    
+    try {
+      await uploadBatch(batch, i + 1, totalBatches, totalFiles, uploadedCount, groupId);
+      uploadedCount += batch.length;
+      uploadState.uploadedCount = uploadedCount;
+      localStorage.setItem('uploadState', JSON.stringify(uploadState));
+    } catch (error) {
+      failedBatches++;
+      uploadState.failedBatches = failedBatches;
+      localStorage.setItem('uploadState', JSON.stringify(uploadState));
+      console.error(`第 ${i + 1} 批上传失败:`, error);
+    }
+  }
+  
+  // 上传完成后清除上传状态
+  localStorage.removeItem('uploadState');
+  
+  if (failedBatches === 0) {
+    showToast(`全部上传完成！共上传 ${uploadedCount} 张图片到 ${groupId === 'home' ? '默认' : '选中'} 分组`, 'success');
+  } else {
+    showToast(`上传完成！成功 ${uploadedCount} 张，失败 ${totalFiles - uploadedCount} 张`, 'warning');
+  }
+  
+  await loadGroups(); // 刷新分组数量
+  switchPage('gallery');
 }
 
 // 上传单个批次
-async function uploadBatch(files) {
+async function uploadBatch(files, batchNum, totalBatches, totalFiles, uploadedCount, groupId) {
   if (files.length === 0) return;
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
@@ -391,26 +438,34 @@ async function uploadBatch(files) {
 
   progressContainer.style.display = 'block';
   progressFill.style.width = '0%';
-  progressText.textContent = `准备上传 ${files.length} 张图片 (${totalSizeMB}MB)...`;
+  
+  if (totalBatches > 1) {
+    progressText.textContent = `准备上传第 ${batchNum}/${totalBatches} 批 (${files.length} 张)`;
+  } else {
+    progressText.textContent = `准备上传 ${files.length} 张图片 (${totalSizeMB}MB)...`;
+  }
 
   const formData = new FormData();
   for (const file of files) {
     formData.append('images', file);
   }
   
-  const groupId = document.getElementById('uploadGroup')?.value || '';
-  if (groupId) {
-    formData.append('groupId', groupId);
-  }
+  // 使用传入的 groupId，确保所有批次使用同一个分组
+  formData.append('groupId', groupId);
 
-  try {
+  return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
     xhr.upload.addEventListener('progress', (e) => {
-      if (e.lengthComputable) {
+      if (e.lengthComputable && totalBatches > 1) {
+        const batchPercent = (e.loaded / e.total) * 100;
+        const overallPercent = ((batchNum - 1) / totalBatches) * 100 + (batchPercent / totalBatches);
+        progressFill.style.width = overallPercent + '%';
+        progressText.textContent = `上传第 ${batchNum}/${totalBatches} 批 (${Math.round(batchPercent)}%) - ${uploadedCount + Math.round((e.loaded / e.total) * files.length)}/${totalFiles} 张`;
+      } else if (e.lengthComputable) {
         const percent = (e.loaded / e.total) * 100;
         progressFill.style.width = percent + '%';
-        progressText.textContent = `上传中 ${Math.round(percent)}% (${files.length} 张)`;
+        progressText.textContent = `上传中 ${Math.round(percent)}% (${Math.round((e.loaded / e.total) * files.length)}/${files.length} 张)`;
       }
     });
 
@@ -419,39 +474,39 @@ async function uploadBatch(files) {
 
       if (xhr.status === 200) {
         const result = JSON.parse(xhr.responseText);
-        showToast(`成功上传 ${result.images.length} 张图片`, 'success');
-        switchPage('gallery');
+        showToast(`第 ${batchNum}/${totalBatches} 批上传成功 ${result.images.length} 张图片`, 'success');
+        resolve();
       } else if (xhr.status === 401) {
         showToast('请先登录', 'error');
         checkAuth();
+        reject(new Error('未登录'));
       } else {
         const error = JSON.parse(xhr.responseText);
-        showToast(error.error || '上传失败', 'error');
+        showToast(`第 ${batchNum}/${totalBatches} 批上传失败: ${error.error || '上传失败'}`, 'error');
+        reject(new Error(error.error || '上传失败'));
       }
     });
 
     xhr.addEventListener('error', () => {
       progressContainer.style.display = 'none';
-      showToast('网络错误，上传失败', 'error');
+      showToast(`第 ${batchNum}/${totalBatches} 批上传失败：网络错误`, 'error');
+      reject(new Error('网络错误'));
     });
 
     xhr.open('POST', '/api/upload/multiple');
     xhr.send(formData);
-  } catch (error) {
-    progressContainer.style.display = 'none';
-    showToast('上传失败：' + error.message, 'error');
-  }
+  });
 }
 
 // 加载图片
 async function loadImages() {
   try {
-    let url = '/api/images';
-    if (currentGroupFilter) {
+    let url = '/api/images/all';
+    if (currentGroupFilter && currentGroupFilter !== 'all') {
       url = `/api/categories/${currentGroupFilter}/images`;
     }
     
-    const response = await fetch(url);
+    const response = await fetch(url + '?t=' + Date.now());
     if (response.status === 401) { checkAuth(); return; }
 
     const data = await response.json();
@@ -670,17 +725,48 @@ async function deleteImage(filename) {
   if (!confirm('确定要删除这张图片吗？')) return;
   
   try {
+    // 显示删除进度
+    progressContainer.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = `准备删除图片...`;
+    
+    // 模拟进度更新
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 10;
+      if (progress <= 90) {
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `删除中 ${progress}%...`;
+      }
+    }, 100);
+    
     const response = await fetch(`/api/images/${filename}`, { method: 'DELETE' });
-    if (response.status === 401) { checkAuth(); return; }
+    
+    // 清除进度更新
+    clearInterval(progressInterval);
+    
+    // 更新进度
+    progressFill.style.width = '100%';
+    progressText.textContent = `删除完成`;
+    
+    if (response.status === 401) { 
+      progressContainer.style.display = 'none';
+      checkAuth(); 
+      return; 
+    }
     
     const data = await response.json();
+    progressContainer.style.display = 'none';
+    
     if (data.success) {
       showToast('删除成功', 'success');
-      loadImages();
+      await loadGroups(); // 刷新分组数量
+      await loadImages(); // 刷新图片列表
     } else {
       showToast(data.error || '删除失败', 'error');
     }
   } catch (error) {
+    progressContainer.style.display = 'none';
     showToast('删除失败', 'error');
   }
 }
@@ -695,20 +781,107 @@ async function deleteSelectedImages() {
   if (!confirm(`确定要删除选中的 ${selectedImages.size} 张图片吗？`)) return;
   
   try {
+    const filenames = Array.from(selectedImages);
+    const total = filenames.length;
+    let completed = 0;
     let successCount = 0;
-    for (const filename of selectedImages) {
-      const response = await fetch(`/api/images/${filename}`, { method: 'DELETE' });
-      if (response.ok) {
-        successCount++;
+    let failedFilenames = [];
+    
+    // 显示删除进度
+    galleryProgressContainer.style.display = 'block';
+    galleryProgressFill.style.width = '0%';
+    galleryProgressText.textContent = `准备删除 ${total} 张图片...`;
+    
+    // 重试函数
+    async function deleteWithRetry(filename, maxRetries = 5) {
+      let retries = 0;
+      while (retries < maxRetries) {
+        try {
+          const response = await fetch(`/api/images/${filename}`, { 
+            method: 'DELETE',
+            timeout: 20000 // 20秒超时
+          });
+          const data = await response.json();
+          return data.success;
+        } catch (error) {
+          retries++;
+          if (retries >= maxRetries) {
+            console.error(`删除图片 ${filename} 失败:`, error);
+            return false;
+          }
+          // 等待一段时间后重试，递增等待时间
+          await new Promise(resolve => setTimeout(resolve, 1500 * retries));
+        }
       }
     }
     
-    showToast(`成功删除 ${successCount} 张图片`, 'success');
+    // 串行删除，确保每个请求都能完成
+    for (let i = 0; i < total; i++) {
+      const filename = filenames[i];
+      try {
+        const success = await deleteWithRetry(filename);
+        completed++;
+        const percent = (completed / total) * 100;
+        galleryProgressFill.style.width = percent + '%';
+        galleryProgressText.textContent = `删除中 ${Math.round(percent)}% (${completed}/${total} 张)`;
+        if (success) {
+          successCount++;
+        } else {
+          failedFilenames.push(filename);
+        }
+        // 每删除一张图片，等待200毫秒，给服务器一点休息时间
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error) {
+        completed++;
+        const percent = (completed / total) * 100;
+        galleryProgressFill.style.width = percent + '%';
+        galleryProgressText.textContent = `删除中 ${Math.round(percent)}% (${completed}/${total} 张)`;
+        console.error(`删除图片 ${filename} 失败:`, error);
+        failedFilenames.push(filename);
+        // 出错后也等待200毫秒
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+    
+    // 尝试删除失败的图片
+    if (failedFilenames.length > 0) {
+      galleryProgressText.textContent = `尝试重新删除失败的 ${failedFilenames.length} 张图片...`;
+      
+      let retrySuccessCount = 0;
+      for (const filename of failedFilenames) {
+        try {
+          const success = await deleteWithRetry(filename, 3); // 再重试3次
+          if (success) {
+            retrySuccessCount++;
+          }
+          // 每重试一张图片，等待300毫秒
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error(`重新删除图片 ${filename} 失败:`, error);
+        }
+      }
+      
+      successCount += retrySuccessCount;
+      failedFilenames = failedFilenames.slice(retrySuccessCount);
+    }
+    
+    galleryProgressContainer.style.display = 'none';
+    
+    if (failedFilenames.length === 0) {
+      showToast(`成功删除全部 ${successCount} 张图片`, 'success');
+    } else {
+      showToast(`成功删除 ${successCount} 张图片，失败 ${failedFilenames.length} 张`, 'warning');
+      console.log('删除失败的图片:', failedFilenames);
+    }
+    
     selectedImages.clear();
     updateSelectedCount();
-    loadImages();
+    await loadGroups(); // 刷新分组数量
+    await loadImages(); // 刷新图片列表
   } catch (error) {
+    galleryProgressContainer.style.display = 'none';
     showToast('删除失败', 'error');
+    console.error('批量删除失败:', error);
   }
 }
 
@@ -1123,6 +1296,33 @@ function updateQuickApiUrl() {
   document.getElementById('quickApiUrl').textContent = `${baseUrl}/api/random`;
 }
 
+// 检查上传状态
+function checkUploadState() {
+  const uploadState = localStorage.getItem('uploadState');
+  if (uploadState) {
+    try {
+      const state = JSON.parse(uploadState);
+      if (state.currentBatch > 0 && state.currentBatch < state.totalBatches) {
+        if (confirm(`检测到有未完成的上传任务：共 ${state.totalFiles} 张图片，已上传 ${state.uploadedCount} 张，当前正在上传第 ${state.currentBatch} 批。是否继续上传？`)) {
+          // 这里可以添加继续上传的逻辑
+          // 由于文件对象无法在本地存储中保存，需要用户重新选择文件
+          showToast('请重新选择文件以继续上传', 'info');
+        } else {
+          // 清除上传状态
+          localStorage.removeItem('uploadState');
+        }
+      } else if (state.currentBatch === state.totalBatches && state.uploadedCount < state.totalFiles) {
+        // 上传已完成但有失败
+        showToast(`上次上传完成：成功 ${state.uploadedCount} 张，失败 ${state.totalFiles - state.uploadedCount} 张`, 'info');
+        localStorage.removeItem('uploadState');
+      }
+    } catch (error) {
+      console.error('解析上传状态失败:', error);
+      localStorage.removeItem('uploadState');
+    }
+  }
+}
+
 // 复制快速链接
 function copyQuickUrl() {
   const url = document.getElementById('quickApiUrl').textContent;
@@ -1343,18 +1543,19 @@ function resetApiConfig() {
 // 加载分组列表
 async function loadGroups() {
   try {
-    const [categoriesRes, imagesRes] = await Promise.all([
-      fetch('/api/categories'),
-      fetch('/api/images')
+    const t = Date.now();
+    const [categoriesRes, allImagesRes] = await Promise.all([
+      fetch('/api/categories?t=' + t),
+      fetch('/api/images/all?t=' + t)
     ]);
     
     const categoriesData = await categoriesRes.json();
-    const imagesData = await imagesRes.json();
+    const allImagesData = await allImagesRes.json();
     
     if (categoriesData.success) {
       allGroups = categoriesData.categories || [];
-      // 获取真实的图片总数并保存到全局变量
-      totalImagesCount = imagesData.success && imagesData.images ? imagesData.images.length : 0;
+      // 所有图片的总数
+      totalImagesCount = allImagesData.success && allImagesData.images ? allImagesData.images.length : 0;
       renderGroupTabs();
       renderGroupFilter();
     }
@@ -1372,11 +1573,14 @@ async function loadGroupsForUpload() {
     if (data.success) {
       allGroups = data.categories || [];
       const select = document.getElementById('uploadGroup');
-      select.innerHTML = '<option value="">默认分组</option>';
+      select.innerHTML = '';
       allGroups.forEach(group => {
         const option = document.createElement('option');
         option.value = group.id;
         option.textContent = group.name;
+        if (group.id === 'home') {
+          option.selected = true;
+        }
         select.appendChild(option);
       });
     }
@@ -1388,18 +1592,22 @@ async function loadGroupsForUpload() {
 // 渲染分组标签
 function renderGroupTabs() {
   const tabsContainer = document.getElementById('groupTabs');
-  // 使用全局变量中存储的真实图片总数
   
-  let html = `<div class="group-tab ${currentGroupFilter === '' ? 'active' : ''}" onclick="filterByGroupTab('')">
-    全部
+  // "所有"分组显示全部图片
+  let html = `<div class="group-tab ${currentGroupFilter === 'all' ? 'active' : ''}" onclick="filterByGroupTab('all')">
+    所有
     <span class="group-count">${totalImagesCount}</span>
   </div>`;
   
   allGroups.forEach(group => {
+    const isHome = group.id === 'home';
     html += `<div class="group-tab ${currentGroupFilter === group.id ? 'active' : ''}" onclick="filterByGroupTab('${group.id}')">
       ${group.name}
       <span class="group-count">${group.images.length}</span>
-      <button class="delete-group-btn" onclick="event.stopPropagation(); deleteGroup('${group.id}')" title="删除分组">×</button>
+      ${!isHome ? `<div class="group-actions">
+        <button class="rename-group-btn" onclick="event.stopPropagation(); showRenameGroupModal('${group.id}', '${group.name.replace(/'/g, "\\'")}')" title="重命名">✏️</button>
+        <button class="delete-group-btn" onclick="event.stopPropagation(); deleteGroup('${group.id}')" title="删除分组">×</button>
+      </div>` : ''}
     </div>`;
   });
   
@@ -1425,8 +1633,9 @@ function renderGroupFilter() {
   const select = document.getElementById('galleryGroupFilter');
   if (!select) return;
   
-  // 使用全局变量中存储的真实图片总数
-  select.innerHTML = `<option value="">全部 (${totalImagesCount})</option>`;
+  let html = `<option value="all">所有 (${totalImagesCount})</option>`;
+  select.innerHTML = html;
+  
   allGroups.forEach(group => {
     const option = document.createElement('option');
     option.value = group.id;
@@ -1478,6 +1687,52 @@ async function createGroup(e) {
     }
   } catch (error) {
     showToast('创建失败', 'error');
+  }
+}
+
+// 重命名分组
+let pendingRenameGroupId = null;
+
+function showRenameGroupModal(groupId, currentName) {
+  pendingRenameGroupId = groupId;
+  document.getElementById('renameGroupInput').value = currentName;
+  document.getElementById('renameGroupModal').classList.add('show');
+}
+
+function closeRenameGroupModal() {
+  document.getElementById('renameGroupModal').classList.remove('show');
+  pendingRenameGroupId = null;
+}
+
+async function confirmRenameGroup() {
+  if (!pendingRenameGroupId) return;
+  
+  const newName = document.getElementById('renameGroupInput').value.trim();
+  if (!newName) {
+    showToast('分组名称不能为空', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/categories/${pendingRenameGroupId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName })
+    });
+    
+    if (response.status === 401) { checkAuth(); return; }
+    
+    const data = await response.json();
+    if (data.success) {
+      showToast('重命名成功', 'success');
+      closeRenameGroupModal();
+      await loadGroups();
+      await loadImages();
+    } else {
+      showToast(data.error || '重命名失败', 'error');
+    }
+  } catch (error) {
+    showToast('重命名失败', 'error');
   }
 }
 

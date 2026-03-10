@@ -40,7 +40,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 限制 10MB
+    fileSize: 300 * 1024 * 1024 // 限制 300MB
   }
 });
 
@@ -51,13 +51,15 @@ router.get('/health', (req, res) => {
 
 // 图片相关路由
 router.post('/upload', requireAuth, upload.single('image'), imageController.uploadSingle);
-router.post('/upload/multiple', requireAuth, upload.array('images', 100), imageController.uploadMultiple);
+router.post('/upload/multiple', requireAuth, upload.array('images', 1000), imageController.uploadMultiple);
 router.get('/images', requireAuth, imageController.getImages);
+router.get('/images/all', requireAuth, imageController.getAllImages);
 router.delete('/images/:filename', requireAuth, imageController.deleteImage);
 
 // 分类相关路由
 router.get('/categories', requireAuth, imageController.getCategories);
 router.post('/categories', requireAuth, imageController.createCategory);
+router.put('/categories/:id', requireAuth, imageController.renameCategory);
 router.delete('/categories/:id', requireAuth, imageController.deleteCategory);
 router.post('/categories/add-image', requireAuth, imageController.addImageToCategory);
 router.post('/categories/remove-image', requireAuth, imageController.removeImageFromCategory);

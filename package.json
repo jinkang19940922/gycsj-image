@@ -1,6 +1,6 @@
 {
   "name": "gycsj-image",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "光影穿梭机 - 个人图床项目",
   "main": "server.js",
   "scripts": {

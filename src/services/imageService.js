@@ -29,7 +29,16 @@ class ImageService {
       try {
         await fs.access(this.categoriesFile);
       } catch {
-        await fs.writeFile(this.categoriesFile, JSON.stringify({ categories: [] }, null, 2));
+        // 创建默认的 home 分组
+        await fs.writeFile(this.categoriesFile, JSON.stringify({ 
+          categories: [
+            {
+              id: 'home',
+              name: '默认',
+              images: []
+            }
+          ] 
+        }, null, 2));
       }
     } catch (error) {
       console.error('初始化目录失败:', error);
@@ -100,19 +109,77 @@ class ImageService {
     }
   }
 
+  // 获取所有图片（从所有分类中收集）
+  async getAllImages(host) {
+    try {
+      // 从分类中获取所有图片
+      const data = await fs.readFile(this.categoriesFile, 'utf8');
+      const categories = JSON.parse(data);
+      
+      // 收集所有分类中的图片（去重）
+      const allImageFilenames = new Set();
+      categories.categories.forEach(category => {
+        category.images.forEach(filename => {
+          allImageFilenames.add(filename);
+        });
+      });
+      
+      // 获取这些图片的详细信息
+      const images = await Promise.all(
+        Array.from(allImageFilenames).map(async filename => {
+          const filePath = path.join(this.uploadDir, filename);
+          const thumbFile = 'thumb_' + filename;
+          
+          // 检查文件是否存在
+          try {
+            await fs.access(filePath);
+          } catch {
+            console.log('图片文件不存在:', filename);
+            return null;
+          }
+          
+          let hasThumbnail = false;
+          try {
+            await fs.access(path.join(this.thumbnailDir, thumbFile));
+            hasThumbnail = true;
+          } catch {
+            hasThumbnail = false;
+          }
+          
+          return {
+            filename: filename,
+            url: `http://${host}/uploads/${filename}`,
+            thumbnail: hasThumbnail
+              ? `http://${host}/thumbnails/${thumbFile}`
+              : `http://${host}/uploads/${filename}`
+          };
+        })
+      );
+      
+      // 过滤掉不存在的图片
+      return images.filter(img => img !== null);
+    } catch (error) {
+      console.error('获取所有图片列表失败:', error);
+      throw new Error('无法读取图片列表');
+    }
+  }
+
   // 删除图片
   async deleteImage(filename) {
     const filePath = path.join(this.uploadDir, filename);
     const thumbPath = path.join(this.thumbnailDir, 'thumb_' + filename);
     
     try {
-      await fs.access(filePath);
-    } catch {
-      throw new Error('图片不存在');
-    }
-    
-    try {
-      await fs.unlink(filePath);
+      // 尝试删除文件
+      try {
+        await fs.access(filePath);
+        await fs.unlink(filePath);
+      } catch {
+        // 文件不存在，忽略错误
+        console.log('图片文件不存在，跳过文件删除:', filename);
+      }
+      
+      // 尝试删除缩略图
       try {
         await fs.access(thumbPath);
         await fs.unlink(thumbPath);
@@ -135,6 +202,33 @@ class ImageService {
     try {
       const data = await fs.readFile(this.categoriesFile, 'utf8');
       const categories = JSON.parse(data);
+      
+      // 检查每个分类中的图片是否实际存在
+      let updated = false;
+      for (const category of categories.categories) {
+        const originalLength = category.images.length;
+        // 过滤掉不存在的图片
+        const existingImages = [];
+        for (const filename of category.images) {
+          const filePath = path.join(this.uploadDir, filename);
+          try {
+            await fs.access(filePath);
+            existingImages.push(filename);
+          } catch {
+            // 图片不存在，跳过
+          }
+        }
+        category.images = existingImages;
+        if (category.images.length !== originalLength) {
+          updated = true;
+        }
+      }
+      
+      // 如果有更新，保存到文件
+      if (updated) {
+        await fs.writeFile(this.categoriesFile, JSON.stringify(categories, null, 2));
+      }
+      
       return categories.categories || [];
     } catch (error) {
       console.error('获取分类列表失败:', error);
@@ -169,6 +263,37 @@ class ImageService {
     }
   }
 
+  // 重命名分类
+  async renameCategory(categoryId, newName) {
+    try {
+      const data = await fs.readFile(this.categoriesFile, 'utf8');
+      const categories = JSON.parse(data);
+      
+      const category = categories.categories.find(cat => cat.id === categoryId);
+      if (!category) {
+        throw new Error('分类不存在');
+      }
+      
+      // 不允许重命名 home 分组
+      if (category.id === 'home') {
+        throw new Error('不能修改默认分组');
+      }
+      
+      // 检查新名称是否已存在
+      if (categories.categories.some(cat => cat.name === newName && cat.id !== categoryId)) {
+        throw new Error('分类名称已存在');
+      }
+      
+      category.name = newName;
+      await fs.writeFile(this.categoriesFile, JSON.stringify(categories, null, 2));
+      
+      return '重命名成功';
+    } catch (error) {
+      console.error('重命名分类失败:', error);
+      throw error;
+    }
+  }
+
   // 删除分类
   async deleteCategory(categoryId, action = 'move') {
     try {
@@ -181,6 +306,11 @@ class ImageService {
       }
       
       const category = categories.categories[categoryIndex];
+      
+      // 不允许删除 home 分组
+      if (category.id === 'home') {
+        throw new Error('不能删除默认分组');
+      }
       
       if (action === 'delete') {
         for (const filename of category.images) {
@@ -338,6 +468,16 @@ class ImageService {
       }
       
       const images = await Promise.all(category.images.map(async filename => {
+        const filePath = path.join(this.uploadDir, filename);
+        
+        // 检查文件是否存在
+        try {
+          await fs.access(filePath);
+        } catch {
+          console.log('图片文件不存在:', filename);
+          return null;
+        }
+        
         const thumbFile = 'thumb_' + filename;
         let hasThumbnail = false;
         try {
@@ -355,7 +495,8 @@ class ImageService {
         };
       }));
       
-      return images;
+      // 过滤掉不存在的图片
+      return images.filter(img => img !== null);
     } catch (error) {
       console.error('获取分类中的图片失败:', error);
       throw error;

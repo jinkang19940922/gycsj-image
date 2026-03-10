@@ -140,6 +140,26 @@
     </div>
   </div>
 
+  <!-- 重命名分组弹窗 -->
+  <div class="modal" id="renameGroupModal">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h3>✏️ 重命名分组</h3>
+        <span class="modal-close" onclick="closeRenameGroupModal()">&times;</span>
+      </div>
+      <div class="settings-body">
+        <div class="form-group">
+          <label>新名称</label>
+          <input type="text" id="renameGroupInput" placeholder="输入新分组名称">
+        </div>
+        <div class="settings-actions">
+          <button type="button" class="btn-cancel" onclick="closeRenameGroupModal()">取消</button>
+          <button type="button" class="btn-submit" onclick="confirmRenameGroup()">确认重命名</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 删除分组确认弹窗 -->
   <div class="modal" id="deleteGroupModal">
     <div class="settings-card">
@@ -254,6 +274,12 @@
       </div>
     </div>
     <div class="group-tabs" id="groupTabs"></div>
+    <div class="progress-container" id="galleryProgressContainer">
+      <div class="progress-bar">
+        <div class="progress-fill" id="galleryProgressFill"></div>
+      </div>
+      <div class="progress-text" id="galleryProgressText">删除中...</div>
+    </div>
     <div class="image-grid" id="imageGrid"></div>
   </div>
 
@@ -268,7 +294,6 @@
       <div class="upload-group-select">
         <label>上传到分组：</label>
         <select id="uploadGroup">
-          <option value="">默认分组</option>
         </select>
         <button class="add-group-btn" onclick="showCreateGroupModal()">+ 新建分组</button>
       </div>
@@ -277,7 +302,7 @@
         <div class="drop-zone-text">
           <strong>点击选择</strong> 或将图片拖拽到此处上传
           <br>
-          <small>支持格式：JPG, PNG, GIF, WebP, SVG | 最大 10MB</small>
+          <small>支持格式：JPG, PNG, GIF, WebP, SVG | 最大 300MB</small>
         </div>
       </div>
       <input type="file" id="fileInput" accept="image/*" multiple>
@@ -291,9 +316,9 @@
       <div class="upload-tips">
         <h3>💡 上传提示</h3>
         <ul>
-          <li>支持单次最多上传 100 张图片</li>
+          <li>支持上传任意数量的图片，无数量限制</li>
           <li>选择文件夹模式可一键上传整个文件夹</li>
-          <li>超过 100 张图片将自动分批上传</li>
+          <li>大量图片将自动分批上传，每批100张</li>
           <li>上传完成后在图片库查看和管理</li>
         </ul>
       </div>

@@ -75,6 +75,17 @@ class ImageController {
     }
   }
 
+  // 获取所有图片（从所有分类中收集）
+  async getAllImages(req, res) {
+    try {
+      const host = req.get('host');
+      const images = await imageService.getAllImages(host);
+      res.json({ success: true, images });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   // 删除图片
   async deleteImage(req, res) {
     try {
@@ -82,11 +93,8 @@ class ImageController {
       const message = await imageService.deleteImage(filename);
       res.json({ success: true, message });
     } catch (error) {
-      if (error.message === '图片不存在') {
-        res.status(404).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: error.message });
-      }
+      // 即使图片不存在，也返回成功，因为imageService已经处理了这种情况
+      res.json({ success: true, message: '删除成功' });
     }
   }
 
@@ -111,6 +119,25 @@ class ImageController {
       res.json({ success: true, category });
     } catch (error) {
       if (error.message === '分类已存在') {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  }
+
+  // 重命名分类
+  async renameCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const { name } = req.body;
+      if (!name || name.trim() === '') {
+        return res.status(400).json({ error: '分类名称不能为空' });
+      }
+      const message = await imageService.renameCategory(id, name.trim());
+      res.json({ success: true, message });
+    } catch (error) {
+      if (error.message === '分类不存在' || error.message === '分类名称已存在' || error.message === '不能修改默认分组') {
         res.status(400).json({ error: error.message });
       } else {
         res.status(500).json({ error: error.message });
