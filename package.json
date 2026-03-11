@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -18,5 +20,8 @@
     "node-fetch": "^2.7.0",
     "sharp": "^0.33.2",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.72.0"
   }
 }
