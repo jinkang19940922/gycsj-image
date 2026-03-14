@@ -893,12 +893,20 @@ function showModalPreview(card) {
   currentZoom = 1;
   modalImageContainer = document.getElementById('modalImageContainer');
   updateModalImage(url);
+  // 直接设置内联样式显示模态框
+  imageModal.style.display = 'flex';
   imageModal.classList.add('show');
+  // 初始化工具栏控制
+  if (window.initToolbarControls) {
+    setTimeout(() => {
+      window.initToolbarControls();
+    }, 100);
+  }
 }
 
 function updateModalImage(url) {
   const modalImage = document.getElementById('modalImage');
-  const downloadBtn = document.getElementById('modalDownloadBtn').querySelector('a');
+  const downloadBtn = document.getElementById('downloadBtn').querySelector('a');
   modalImage.src = url;
   
   // 重置缩放和拖拽位置
@@ -1061,6 +1069,8 @@ function nextImage(event) {
 // 关闭图片预览
 function closeModal() {
   imageModal.classList.remove('show');
+  // 直接设置内联样式隐藏模态框
+  imageModal.style.display = 'none';
   currentZoom = 1;
   isPreviewingBingWallpapers = false;
   if (document.fullscreenElement) {
@@ -1158,6 +1168,227 @@ function showToast(message, type = 'info') {
 // 点击页面其他地方关闭菜单
 document.addEventListener('click', () => {
   closeAllMenus();
+});
+
+// 工具栏显示/隐藏控制
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('imageModal');
+  const modalControls = document.querySelector('.modal-controls');
+  const modalClose = document.querySelector('.modal-close');
+  const modalCloseCenter = document.querySelector('.modal-close-center');
+  const toolbarHint = document.getElementById('toolbarHint');
+  
+  // 配置参数
+  const CONFIG = {
+    hideDelay: 2500,        // 隐藏延迟时间（毫秒）
+    transitionDuration: 300, // 过渡动画持续时间（毫秒）
+    hintOpacity: 0.5        // 提示条透明度
+  };
+  
+  let hideTimeout = null;
+  let isControlsVisible = false;
+  
+  // 防抖函数
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  
+  // 显示工具栏和关闭按钮
+  function showControls() {
+    clearTimeout(hideTimeout);
+    
+    if (!isControlsVisible) {
+      isControlsVisible = true;
+      
+      // 显示工具栏
+      modalControls.style.opacity = '1';
+      modalControls.style.transform = 'translateX(-50%) translateY(0)';
+      modalControls.style.pointerEvents = 'auto';
+      
+      // 显示右上角关闭按钮
+      modalClose.style.opacity = '1';
+      modalClose.style.pointerEvents = 'auto';
+      
+      // 显示中央关闭按钮
+      if (modalCloseCenter) {
+        modalCloseCenter.style.opacity = '1';
+        modalCloseCenter.style.pointerEvents = 'auto';
+      }
+      
+      // 隐藏提示条
+      if (toolbarHint) {
+        toolbarHint.style.opacity = '0';
+      }
+    }
+    
+    // 重新启动隐藏计时器
+    startHideTimer();
+  }
+  
+  // 隐藏工具栏和关闭按钮
+  function hideControls() {
+    isControlsVisible = false;
+    
+    // 隐藏工具栏
+    modalControls.style.opacity = '0';
+    modalControls.style.transform = 'translateX(-50%) translateY(20px)';
+    modalControls.style.pointerEvents = 'none';
+    
+    // 隐藏右上角关闭按钮
+    modalClose.style.opacity = '0';
+    modalClose.style.pointerEvents = 'none';
+    
+    // 隐藏中央关闭按钮
+    if (modalCloseCenter) {
+      modalCloseCenter.style.opacity = '0';
+      modalCloseCenter.style.pointerEvents = 'none';
+    }
+    
+    // 显示提示条
+    if (toolbarHint) {
+      toolbarHint.style.opacity = CONFIG.hintOpacity;
+    }
+  }
+  
+  // 启动隐藏计时器
+  function startHideTimer() {
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+      hideControls();
+    }, CONFIG.hideDelay);
+  }
+  
+  // 初始化工具栏状态
+  function initControls() {
+    // 初始状态：隐藏工具栏，显示提示条
+    modalControls.style.opacity = '0';
+    modalControls.style.transform = 'translateX(-50%) translateY(20px)';
+    modalControls.style.pointerEvents = 'none';
+    modalControls.style.transition = `all ${CONFIG.transitionDuration}ms ease`;
+    
+    // 初始化右上角关闭按钮
+    modalClose.style.opacity = '0';
+    modalClose.style.pointerEvents = 'none';
+    modalClose.style.transition = `all ${CONFIG.transitionDuration}ms ease`;
+    
+    // 初始化中央关闭按钮
+    if (modalCloseCenter) {
+      modalCloseCenter.style.opacity = '0';
+      modalCloseCenter.style.pointerEvents = 'none';
+      modalCloseCenter.style.transition = `all ${CONFIG.transitionDuration}ms ease`;
+    }
+    
+    if (toolbarHint) {
+      toolbarHint.style.opacity = CONFIG.hintOpacity;
+      toolbarHint.style.transition = `opacity ${CONFIG.transitionDuration}ms ease`;
+    }
+    
+    isControlsVisible = false;
+  }
+  
+  // 鼠标移动事件处理（使用防抖）
+  const handleMouseMove = debounce(() => {
+    showControls();
+  }, 50);
+  
+  // 监听鼠标移动
+  modal.addEventListener('mousemove', handleMouseMove);
+  
+  // 监听鼠标进入模态框
+  modal.addEventListener('mouseenter', () => {
+    showControls();
+  });
+  
+  // 监听提示条点击
+  if (toolbarHint) {
+    toolbarHint.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showControls();
+    });
+    
+    toolbarHint.addEventListener('mouseenter', () => {
+      toolbarHint.style.opacity = '0.8';
+    });
+    
+    toolbarHint.addEventListener('mouseleave', () => {
+      if (!isControlsVisible) {
+        toolbarHint.style.opacity = CONFIG.hintOpacity;
+      }
+    });
+  }
+  
+  // 监听工具栏鼠标事件，防止隐藏
+  modalControls.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimeout);
+  });
+  
+  modalControls.addEventListener('mouseleave', () => {
+    startHideTimer();
+  });
+  
+  // 监听右上角关闭按钮鼠标事件
+  modalClose.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimeout);
+  });
+  
+  modalClose.addEventListener('mouseleave', () => {
+    startHideTimer();
+  });
+  
+  // 监听中央关闭按钮鼠标事件
+  if (modalCloseCenter) {
+    modalCloseCenter.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimeout);
+      // 悬停时增加背景透明度
+      modalCloseCenter.style.background = 'rgba(255, 255, 255, 0.3)';
+      modalCloseCenter.style.transform = 'translateX(-50%) scale(1.1)';
+    });
+    
+    modalCloseCenter.addEventListener('mouseleave', () => {
+      startHideTimer();
+      // 恢复背景透明度
+      modalCloseCenter.style.background = 'rgba(255, 255, 255, 0.15)';
+      modalCloseCenter.style.transform = 'translateX(-50%) scale(1)';
+    });
+    
+    // 点击时阻止事件冒泡
+    modalCloseCenter.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  // 监听全屏变化
+  document.addEventListener('fullscreenchange', () => {
+    setTimeout(() => {
+      initControls();
+    }, 100);
+  });
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', () => {
+    // 保持当前状态，只调整位置
+    if (isControlsVisible) {
+      showControls();
+    } else {
+      hideControls();
+    }
+  });
+  
+  // 暴露初始化函数供外部调用
+  window.initToolbarControls = initControls;
+  window.showToolbarControls = showControls;
+  window.hideToolbarControls = hideControls;
+  
+  // 初始化
+  initControls();
 });
 
 // ============ API工具页面功能 ============
