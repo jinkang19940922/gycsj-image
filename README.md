@@ -12,7 +12,7 @@
 ### 🖼️ 图片管理
 - 简洁优雅的图片展示界面
 - 独立上传页面 - 专门的上传功能页面
-- 批量上传 - 支持选择整个文件夹一键上传（最多 100 张）
+- 批量上传 - 支持选择整个文件夹一键上传（最多 1000 张，超过自动分批）
 - 自动生成缩略图 - 快速预览
 - 一键复制多种格式（链接/Markdown/BBCode/HTML）
 - 批量删除 - 支持多选删除图片
@@ -163,7 +163,7 @@ environment:
 | GET | `/api/auth/status` | 检查登录状态 |
 | POST | `/api/account/update` | 更新账户信息 |
 | POST | `/api/upload` | 上传单张图片 |
-| POST | `/api/upload/multiple` | 批量上传（最多 100 张） |
+| POST | `/api/upload/multiple` | 批量上传（最多 1000 张，超过自动分批） |
 | GET | `/api/images` | 获取图片列表 |
 | DELETE | `/api/images/:filename` | 删除指定图片 |
 | GET | `/api/bing-wallpapers` | 获取必应壁纸列表 |
@@ -224,11 +224,14 @@ gycsj-image/
 └── README.md            # 说明文档
 ```
 
-## 📝 限制
+## 📝 使用限制
 
-- 支持格式：JPG, PNG, GIF, WebP, SVG
-- 单文件最大：300MB
-- 批量上传：最多 1000 张（超过自动分批）
+| 限制项 | 说明 |
+|--------|------|
+| 支持格式 | JPG, PNG, GIF, WebP, SVG |
+| 单文件大小 | 最大 300MB |
+| 批量上传数量 | 最多 1000 张（超过自动分批，每批100张） |
+| 文件命名 | 自动使用原文件名，重复时自动添加序号 |
 
 ## 🛡️ 安全提示
 
